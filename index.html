@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CHOI WOO YOUNG SEAFOOD</title>
+
+<!-- PWA 설치 설정 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14171F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="최우영씨푸드">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#FAF6EE;}
+
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:600px;
+    margin:0 auto;
+    aspect-ratio:1023 / 1537;
+  }
+  .stage img{
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    display:block;
+    -webkit-user-drag:none;
+    user-select:none;
+  }
+  .hotspot{
+    position:absolute;
+    border-radius:14px;
+    background:rgba(201,160,80,0);
+    -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease;
+  }
+  .hotspot:active{
+    background:rgba(201,160,80,0.30);
+  }
+  @media (hover:hover){
+    .hotspot:hover{
+      background:rgba(201,160,80,0.16);
+    }
+  }
+  body.debug .hotspot{
+    outline:2px dashed rgba(228,72,59,0.85);
+    background:rgba(228,72,59,0.08);
+  }
+
+  /* 설치 안내 배너 (설치 가능할 때만 자동으로 나타남) */
+  #installBar{
+    position:fixed; left:0; right:0; bottom:0;
+    display:none;
+    align-items:center; gap:10px;
+    background:#14171F; color:#fff;
+    padding:12px 16px;
+    font-family:sans-serif;
+    z-index:999;
+  }
+  #installBar img{ width:32px; height:32px; border-radius:8px; }
+  #installBar .txt{ flex:1; font-size:13px; }
+  #installBar button{
+    background:#C9A050; color:#14171F; border:none;
+    font-weight:700; font-size:13px;
+    padding:8px 14px; border-radius:20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <img src="main.png" alt="CHOI WOO YOUNG SEAFOOD">
+</div>
+
+<div id="installBar">
+  <img src="icon-96.png" alt="아이콘">
+  <div class="txt">홈 화면에 앱 설치하기</div>
+  <button id="installBtn">설치</button>
+</div>
+
+<script>
+  if(location.search.indexOf('debug') > -1){ document.body.classList.add('debug'); }
+
+  /*
+    ============================================================
+    링크 연결 안내
+    ============================================================
+    url 자리에는 아직 실제 주소가 없어서, 이미지 속 버튼 이름을
+    그대로 임시로 넣어두었습니다 (예: "오픈 체크").
+    나중에 주소가 정해지면 이 자리에 실제 URL만 바꿔 넣으면
+    바로 그 카드가 해당 주소로 연결됩니다.
+
+    x, y, w, h 는 원본 이미지(1023 x 1537 px) 기준 좌표입니다.
+    ============================================================
+  */
+  const IMG_W = 1023;
+  const IMG_H = 1537;
+
+  const LINKS = [
+    // ---- 오늘의 업무 (4) ----
+    { key:"open-check",       label:"오픈 체크",       x:28,  y:395, w:254, h:222, url:"오픈 체크" },
+    { key:"cash-check",       label:"시재 확인",       x:292, y:395, w:224, h:222, url:"시재 확인" },
+    { key:"today-dday",       label:"오늘 D-Day",      x:524, y:395, w:226, h:222, url:"오늘 D-Day" },
+    { key:"close-checklist",  label:"마감 체크리스트", x:758, y:395, w:224, h:222, url:"마감 체크리스트" },
+
+    // ---- 매장 업무 (2) ----
+    { key:"order",            label:"발주",           x:28,  y:725, w:254, h:195, url:"발주" },
+    { key:"order-standard",   label:"발주기본",       x:292, y:725, w:224, h:195, url:"발주기본" },
+
+    // ---- 함께 알아두기 (4) ----
+    { key:"onboarding",       label:"입사",           x:28,  y:1025, w:254, h:160, url:"입사" },
+    { key:"dispatch",         label:"파출",           x:292, y:1025, w:224, h:160, url:"파출" },
+    { key:"interview",        label:"면접",           x:524, y:1025, w:226, h:160, url:"면접" },
+    { key:"basics",           label:"기본기",         x:758, y:1025, w:224, h:160, url:"기본기" },
+
+    // ---- 필요할 때 바로찾기 (2) ----
+    { key:"lost-and-found",   label:"분실물",         x:28,  y:1280, w:330, h:145, url:"분실물" },
+    { key:"fire-safety",      label:"소방안전",       x:360, y:1280, w:330, h:145, url:"소방안전" }
+  ];
+
+  const stage = document.getElementById('stage');
+
+  function isRealUrl(u){
+    return /^https?:\/\//i.test(u);
+  }
+
+  LINKS.forEach(function(item){
+    const a = document.createElement('a');
+    a.className = 'hotspot';
+    a.href = isRealUrl(item.url) ? item.url : '#';
+    a.setAttribute('aria-label', item.label);
+    a.style.left   = (item.x / IMG_W * 100) + '%';
+    a.style.top    = (item.y / IMG_H * 100) + '%';
+    a.style.width  = (item.w / IMG_W * 100) + '%';
+    a.style.height = (item.h / IMG_H * 100) + '%';
+
+    a.addEventListener('click', function(e){
+      if(!isRealUrl(item.url)){
+        e.preventDefault();
+        console.warn('아직 실제 링크가 연결되지 않음: ' + item.key + ' ("' + item.url + '")');
+      }
+    });
+
+    stage.appendChild(a);
+  });
+
+  // 서비스워커 등록 (설치 가능 요건 충족 + 오프라인 캐시)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(err){
+        console.warn('서비스워커 등록 실패:', err);
+      });
+    });
+  }
+
+  // 설치 프롬프트 처리
+  let deferredPrompt = null;
+  const bar = document.getElementById('installBar');
+  const btn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    bar.style.display = 'flex';
+  });
+
+  btn.addEventListener('click', () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(() => {
+      deferredPrompt = null;
+      bar.style.display = 'none';
+    });
+  });
+
+  window.addEventListener('appinstalled', () => {
+    bar.style.display = 'none';
+  });
+</script>
+
+</body>
+</html>
