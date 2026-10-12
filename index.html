@@ -29,6 +29,7 @@
     position:absolute; top:0; left:0;
     width:100%; height:100%;
     display:block;
+    pointer-events:none;
     -webkit-user-drag:none;
     user-select:none;
   }
@@ -37,8 +38,12 @@
     border-radius:14px;
     background:rgba(201,160,80,0);
     -webkit-tap-highlight-color:transparent;
-    transition:background .15s ease;
+    touch-action:manipulation;
+    z-index:1;
   }
+  .pending{display:flex;align-items:flex-end;justify-content:center;pointer-events:none;}
+  .pending span{font:11px sans-serif;background:#FAF6EE;color:#555;padding:3px 6px;border-radius:5px;margin-bottom:5px;}
+  .hotspot:focus-visible{outline:3px solid #C9A050;}
   .hotspot:active{
     background:rgba(201,160,80,0.30);
   }
@@ -74,7 +79,19 @@
 <body>
 
 <div class="stage" id="stage">
-  <img src="main.png" alt="CHOI WOO YOUNG SEAFOOD">
+  <img src="main.png" width="1023" height="1537" fetchpriority="high" decoding="async" alt="CHOI WOO YOUNG SEAFOOD">
+  <a class="hotspot" href="https://openreport-dun.vercel.app" aria-label="오픈 체크" style="left:2.737048%;top:25.699414%;width:24.828935%;height:14.443722%"></a>
+  <a class="hotspot" href="https://daily-hub-a67d.vercel.app" aria-label="시재 확인" style="left:28.543500%;top:25.699414%;width:21.896383%;height:14.443722%"></a>
+  <span class="hotspot pending" role="note" aria-label="오늘 D-Day: 연결 준비 중" style="left:51.221896%;top:25.699414%;width:22.091887%;height:14.443722%"><span>연결 준비 중</span></span>
+  <a class="hotspot" href="https://ga-deadline.vercel.app" aria-label="마감 체크리스트" style="left:74.095797%;top:25.699414%;width:21.896383%;height:14.443722%"></a>
+  <a class="hotspot" href="https://ks-sand-eight.vercel.app" aria-label="발주" style="left:2.737048%;top:47.169811%;width:24.828935%;height:12.687053%"></a>
+  <a class="hotspot" href="https://bjed-jade.vercel.app" aria-label="발주기본" style="left:28.543500%;top:47.169811%;width:21.896383%;height:12.687053%"></a>
+  <a class="hotspot" href="https://staff-portal1-mu.vercel.app" aria-label="입사" style="left:2.737048%;top:66.688354%;width:24.828935%;height:10.409889%"></a>
+  <a class="hotspot" href="https://staff-portal2.vercel.app" aria-label="파출" style="left:28.543500%;top:66.688354%;width:21.896383%;height:10.409889%"></a>
+  <a class="hotspot" href="https://interview-nine-zeta.vercel.app" aria-label="면접" style="left:51.221896%;top:66.688354%;width:22.091887%;height:10.409889%"></a>
+  <span class="hotspot pending" role="note" aria-label="기본기: 연결 준비 중" style="left:74.095797%;top:66.688354%;width:21.896383%;height:10.409889%"><span>연결 준비 중</span></span>
+  <a class="hotspot" href="https://cardhelp10.vercel.app" aria-label="분실물" style="left:2.737048%;top:83.279115%;width:32.258065%;height:9.433962%"></a>
+  <a class="hotspot" href="https://cwy-fire-safety.vercel.app" aria-label="소방안전" style="left:35.190616%;top:83.279115%;width:32.258065%;height:9.433962%"></a>
 </div>
 
 <div id="installBar">
@@ -86,72 +103,9 @@
 <script>
   if(location.search.indexOf('debug') > -1){ document.body.classList.add('debug'); }
 
-  /*
-    ============================================================
-    링크 연결 안내
-    ============================================================
-    url 자리에는 아직 실제 주소가 없어서, 이미지 속 버튼 이름을
-    그대로 임시로 넣어두었습니다 (예: "오픈 체크").
-    나중에 주소가 정해지면 이 자리에 실제 URL만 바꿔 넣으면
-    바로 그 카드가 해당 주소로 연결됩니다.
-
-    x, y, w, h 는 원본 이미지(1023 x 1537 px) 기준 좌표입니다.
-    ============================================================
-  */
-  const IMG_W = 1023;
-  const IMG_H = 1537;
-
-  const LINKS = [
-    // ---- 오늘의 업무 (4) ----
-    { key:"open-check",       label:"오픈 체크",       x:28,  y:395, w:254, h:222, url:"https://openreport-dun.vercel.app" },
-    { key:"cash-check",       label:"시재 확인",       x:292, y:395, w:224, h:222, url:"https://daily-hub-a67d.vercel.app" },
-    { key:"today-dday",       label:"오늘 D-Day",      x:524, y:395, w:226, h:222, url:"오늘 D-Day" },
-    { key:"close-checklist",  label:"마감 체크리스트", x:758, y:395, w:224, h:222, url:"https://ga-deadline.vercel.app" },
-
-    // ---- 매장 업무 (2) ----
-    { key:"order",            label:"발주",           x:28,  y:725, w:254, h:195, url:"https://ks-sand-eight.vercel.app" },
-    { key:"order-standard",   label:"발주기본",       x:292, y:725, w:224, h:195, url:"https://bjed-jade.vercel.app" },
-
-    // ---- 함께 알아두기 (4) ----
-    { key:"onboarding",       label:"입사",           x:28,  y:1025, w:254, h:160, url:"https://staff-portal1-mu.vercel.app" },
-    { key:"dispatch",         label:"파출",           x:292, y:1025, w:224, h:160, url:"https://staff-portal2.vercel.app" },
-    { key:"interview",        label:"면접",           x:524, y:1025, w:226, h:160, url:"https://interview-nine-zeta.vercel.app" },
-    { key:"basics",           label:"기본기",         x:758, y:1025, w:224, h:160, url:"기본기" },
-
-    // ---- 필요할 때 바로찾기 (2) ----
-    { key:"lost-and-found",   label:"분실물",         x:28,  y:1280, w:330, h:145, url:"https://cardhelp10.vercel.app" },
-    { key:"fire-safety",      label:"소방안전",       x:360, y:1280, w:330, h:145, url:"https://cwy-fire-safety.vercel.app" }
-  ];
-
-  const stage = document.getElementById('stage');
-
-  function isRealUrl(u){
-    return /^https?:\/\//i.test(u);
-  }
-
-  LINKS.forEach(function(item){
-    const a = document.createElement('a');
-    a.className = 'hotspot';
-    a.href = isRealUrl(item.url) ? item.url : '#';
-    a.setAttribute('aria-label', item.label);
-    a.style.left   = (item.x / IMG_W * 100) + '%';
-    a.style.top    = (item.y / IMG_H * 100) + '%';
-    a.style.width  = (item.w / IMG_W * 100) + '%';
-    a.style.height = (item.h / IMG_H * 100) + '%';
-
-    a.addEventListener('click', function(e){
-      if(!isRealUrl(item.url)){
-        e.preventDefault();
-        console.warn('아직 실제 링크가 연결되지 않음: ' + item.key + ' ("' + item.url + '")');
-      }
-    });
-
-    stage.appendChild(a);
-  });
-
   // 서비스워커 등록 (설치 가능 요건 충족 + 오프라인 캐시)
   if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){
+    window.addEventListener('DOMContentLoaded', function(){
       navigator.serviceWorker.register('sw.js').catch(function(err){
         console.warn('서비스워커 등록 실패:', err);
       });
@@ -169,7 +123,16 @@
     bar.style.display = 'flex';
   });
 
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(isIOS && !standalone){
+    bar.querySelector('.txt').textContent = 'Safari에서 공유 → 홈 화면에 추가로 설치하세요.';
+    btn.textContent = '닫기';
+    bar.style.display = 'flex';
+  }
+
   btn.addEventListener('click', () => {
+    if(isIOS){ bar.style.display = 'none'; return; }
     if(!deferredPrompt) return;
     deferredPrompt.prompt();
     deferredPrompt.userChoice.finally(() => {
